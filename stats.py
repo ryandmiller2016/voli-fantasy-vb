@@ -1,5 +1,8 @@
+from flask import Flask, request, jsonify
 import json
 import requests
+
+app = Flask(__name__)
 
 def process_stats_from_url(file_url):
     """
@@ -9,7 +12,7 @@ def process_stats_from_url(file_url):
     try:
         # Download the JSON-TXT file from Bubble’s upload system
         response = requests.get(file_url)
-        response.raise_for_status()  # Ensure we got a valid response
+        response.raise_for_status()
 
         # Parse the JSON content
         data = json.loads(response.text)
@@ -75,3 +78,20 @@ def process_stats_from_url(file_url):
 
     except Exception as e:
         return {"error": str(e)}
+
+@app.route('/process-stats', methods=['POST'])
+def process_stats():
+    """
+    API Endpoint to receive a file URL and process stats.
+    """
+    data = request.get_json()
+    file_url = data.get('file_url')
+
+    if not file_url:
+        return jsonify({"error": "Missing file_url parameter"}), 400
+
+    result = process_stats_from_url(file_url)
+    return jsonify(result)
+
+if __name__ == '__main__':
+    app.run(host="0.0.0.0", port=8080)
